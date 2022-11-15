@@ -2,12 +2,31 @@ import os
 import PySimpleGUI as sg
 import yaml
 import shutil
+import sqlite3
+import sys
 
 sg.theme("Dark Brown")
-modloader_version = "1.0.0"
+modloader_version = "1.1.0"
 need_key = ["mod_version","title","description","modloader_version"]
 
-dat_path = os.path.join("C:\\Users\\",os.getlogin(),"AppData\\LocalLow\\Cygames\\umamusume\\dat\\")
+if os.path.isfile(".\\setting.yml"):
+    with open(".\\setting.yml",encoding="utf-8") as yml:
+        yaml_data = yaml.safe_load(yml)
+
+    if yaml_data["umamusume_path"] == "default":
+        dat_path = os.path.join("C:\\Users\\",os.getlogin(),"AppData\\LocalLow\\Cygames\\umamusume\\dat\\")
+        master_path = os.path.join("C:\\Users\\",os.getlogin(),"AppData\\LocalLow\\Cygames\\umamusume\\master\\master.mdb")
+    else:
+        if os.path.isdir(yaml_data["umamusume_path"]):
+            dat_path = os.path.join(yaml_data["umamusume_path"],"dat")
+            master_path = os.path.join(yaml_data["umamusume_path"],"master","master.mdb")
+        else:
+            sg.popup_error("setting.ymlのumamusume_pathに書かれているフォルダが存在しません。\nパスを間違えている可能性があります。\nどうしても治らない場合はDMにてご報告よろしくお願いします。\nプログラムを終了します。")
+            sys.exit()
+else:
+    sg.popup_error("setting.ymlが存在しません。パスをデフォルトにして起動します。")
+    dat_path = os.path.join("C:\\Users\\",os.getlogin(),"AppData\\LocalLow\\Cygames\\umamusume\\dat\\")
+    master_path = os.path.join("C:\\Users\\",os.getlogin(),"AppData\\LocalLow\\Cygames\\umamusume\\master\\master.mdb")
 
 mod_load_layout = [
     [sg.Text("mod"),
@@ -25,9 +44,12 @@ mod_info = [
 ]
 
 mod_control = [
-    [sg.Button("ロード",key="-load-",disabled=True),
-    sg.Button("アンロード",key="-unload-",disabled=True),
-    sg.Text("modloader_version : 1.0.0")
+    [sg.Button("assetsロード",key="-assets_load-",disabled=True),
+    sg.Button("assetsアンロード",key="-assets_unload-",disabled=True),
+    ],
+    [sg.Button("masterロード",key="-master_load-",disabled=True),
+    sg.Button("masterアンロード",key="-master_unload-",disabled=True),
+    sg.Text("modloader_version : 1.1.0",pad=((0,75),(0,0)))
     ]
 ]
 
@@ -57,8 +79,10 @@ def reaload():
                 window["-title-"].Update("")
                 window["-mod_version-"].Update("")
                 window["-description-"].Update("")
-                window["-load-"].Update(disabled=True)
-                window["-unload-"].Update(disabled=True)
+                window["-assets_load-"].Update(disabled=True)
+                window["-assets_unload-"].Update(disabled=True)
+                window["-master_load-"].Update(disabled=True)
+                window["-master_unload-"].Update(disabled=True)
                 return
         window["-title-"].Update(yaml_data.get("title","情報がありません"))
         window["-mod_version-"].Update("mod_version : " + yaml_data.get("mod_version","情報がありません"))
@@ -72,15 +96,21 @@ def reaload():
             window["-description-"].Update(description_text + "\n-Note-\nこのmodは\nmodloader_version : " + modloader_version + "\n向けのものです。")
     
         if os.path.isdir(os.path.join(values["-folder_path-"],"assets")):
-            window["-load-"].Update(disabled=False)
-            window["-unload-"].Update(disabled=False)
+            window["-assets_load-"].Update(disabled=False)
+            window["-assets_unload-"].Update(disabled=False)
+
+        if os.path.isdir(os.path.join(values["-folder_path-"],"master")):
+            window["-master_load-"].Update(disabled=False)
+            window["-master_unload-"].Update(disabled=False)
 
     else:
         window["-title-"].Update("")
         window["-mod_version-"].Update("")
         window["-description-"].Update("")
-        window["-load-"].Update(disabled=True)
-        window["-unload-"].Update(disabled=True)
+        window["-assets_load-"].Update(disabled=True)
+        window["-assets_unload-"].Update(disabled=True)
+        window["-master_load-"].Update(disabled=True)
+        window["-master_unload-"].Update(disabled=True)
 
 window = sg.Window("UmaMusume_Mod_Loader_GUI",layout)
 
@@ -93,8 +123,8 @@ while True:
     if event == "-reload-":
         reaload()
 
-    if event == "-load-":
-        popup_yesno = sg.popup_yes_no("本当にmodをロードしますか？")
+    if event == "-assets_load-":
+        popup_yesno = sg.popup_yes_no("本当にassetsをロードしますか？")
         if popup_yesno == "Yes":
             assets = os.listdir(os.path.join(values["-folder_path-"],"assets"))
             progress = 0
@@ -111,21 +141,21 @@ while True:
                     if not os.path.isfile(backup_asset_path):
                         shutil.copy(dat_asset_path,backup_asset_path)
                 else:
-                    sg.popup_error("datフォルダーに置き換え先のファイルが存在せず、バックアップが行えませんでした。\nウマ娘で「一括ダウンロード」をしてください \n作業を中断します。")
+                    sg.popup_error("datフォルダーに置き換え先のファイルが存在せず、バックアップが行えませんでした。\nウマ娘で「一括ダウンロード」をしてください \nassetsのロードを中断します。")
                     break
 
                 # ロード
                 shutil.copy(mods_asset_path,dat_asset_path)
 
                 progress += 1
-                window["-progress_value-"].update(F"modロード {progress} / {len(assets)} ")
+                window["-progress_value-"].update(F"assetsロード {progress} / {len(assets)} ")
                 window["-progress_bar-"].update(max=len(assets),current_count=progress)
-            sg.popup("modをロードしました。")
+            sg.popup("assetsをロードしました。")
         else:
-            sg.popup("modのロードを中断しました。")
+            sg.popup("assetsのロードを中断しました。")
     
-    if event == "-unload-":
-        popup_yesno = sg.popup_yes_no("本当にmodをアンロードしますか？")
+    if event == "-assets_unload-":
+        popup_yesno = sg.popup_yes_no("本当にassetsをアンロードしますか？")
         if popup_yesno == "Yes":
             assets = os.listdir(os.path.join(values["-folder_path-"],"assets"))
             progress = 0
@@ -141,12 +171,65 @@ while True:
                 shutil.copy(backup_asset_path,dat_asset_path)
                 
                 progress += 1
-                window["-progress_value-"].update(F"modアンロード {progress} / {len(assets)} ")
+                window["-progress_value-"].update(F"assetsアンロード {progress} / {len(assets)} ")
                 window["-progress_bar-"].update(max=len(assets),current_count=progress)
-            sg.popup("modをアンロードしました。")
+            sg.popup("assetsをアンロードしました。")
         else:
-            sg.popup("modのアンロードを中断しました。")
+            sg.popup("assetsのアンロードを中断しました。")
 
+    if event == "-master_load-":
+        popup_yesno = sg.popup_yes_no("本当にmasterをロードしますか？")
+        if popup_yesno == "Yes":
+            sql_path = os.path.join(values["-folder_path-"],"master","sql.txt")
+
+            if os.path.isfile(sql_path):
+                window["-progress_bar-"].update(bar_color=("green4",""))
+
+                window["-progress_value-"].update("masterロード 0 / 1 ")
+                window["-progress_bar-"].update(max=1,current_count=0)
+
+                if os.path.isfile(master_path):
+                    db = sqlite3.connect(master_path)
+                    c = db.cursor()
+
+                    with open(sql_path,mode="r",encoding="utf-8") as f:
+                        c.executescript(f.read().replace("\n",""))
+
+                    db.commit()
+
+                    db.close()
+
+                    window["-progress_value-"].update("masterロード 1 / 1 ")
+                    window["-progress_bar-"].update(max=1,current_count=1)
+
+                    sg.popup("masterをロードしました。")
+                else:
+                    sg.popup_error("master.mdbが存在しません。\n一度ウマ娘を起動してください。\nmasterのロードを中断します。")
+            else:
+                sg.popup_error("sql.txtが存在しません。\nmasterのロードを中断します。")
+        else:
+            sg.popup("masterのロードを中断しました。")
+
+    if event == "-master_unload-":
+        popup_yesno = sg.popup_yes_no("masterは仕様上、一部だけの解除が不可能であり、\n今まで読み込んだmasterのすべてがリセットされます。\nアンロードしたあとは、一度ウマ娘を起動してください。\n本当にmasterをアンロードしますか？")
+        if popup_yesno == "Yes":
+            window["-progress_bar-"].update(bar_color=("red4",""))
+
+            window["-progress_value-"].update("masterアンロード 0 / 1 ")
+            window["-progress_bar-"].update(max=1,current_count=0)
+
+            if os.path.isfile(master_path):
+                os.remove(master_path)
+
+                window["-progress_value-"].update("masterアンロード 1 / 1 ")
+                window["-progress_bar-"].update(max=1,current_count=1)
+
+                sg.popup("masterをアンロードしました。\n一度ウマ娘を起動してください。")
+            else:
+                sg.popup_error("master.mdbが存在しません。\nすでにmasterがアンロードされています。\nmasterのアンロードを中断します。")
+        else:
+            sg.popup("masterのアンロードを中断しました。")
+            
     if event == sg.WIN_CLOSED:
         break
 
