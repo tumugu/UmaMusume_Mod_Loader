@@ -98,10 +98,16 @@ def reaload():
         if os.path.isdir(os.path.join(values["-folder_path-"],"assets")):
             window["-assets_load-"].Update(disabled=False)
             window["-assets_unload-"].Update(disabled=False)
+        else:
+            window["-assets_load-"].Update(disabled=True)
+            window["-assets_unload-"].Update(disabled=True)
 
         if os.path.isdir(os.path.join(values["-folder_path-"],"master")):
             window["-master_load-"].Update(disabled=False)
             window["-master_unload-"].Update(disabled=False)
+        else:
+            window["-master_load-"].Update(disabled=True)
+            window["-master_unload-"].Update(disabled=True)          
 
     else:
         window["-title-"].Update("")
