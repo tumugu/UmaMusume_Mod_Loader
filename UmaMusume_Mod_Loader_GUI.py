@@ -66,7 +66,7 @@ layout = [
 ]
 
 def reaload():
-    mods_setting_path = os.path.join(values["-folder_path-"],"setting.yml")
+    mods_setting_path = os.path.join(values["-folder_path-"].replace("\\","/"),"setting.yml")
 
     # バグ対策してない、yml読み込み部分
     if os.path.isfile(mods_setting_path):
