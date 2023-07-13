@@ -1,4 +1,0 @@
-umamusume_path : "default"
-# ウマ娘のパスは、デフォルトだと
-# C:/users/[ユーザー名]/AppData/LocalLow/Cygames/umamusume
-# になっています。もしインストール先を変えている場合は上の"default"を変えたインストール先の絶対パスにしてください。
