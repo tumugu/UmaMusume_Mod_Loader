@@ -1,0 +1,16 @@
+{
+    "config":{
+        "theme":{
+            "BACKGROUND": "#FAFBFA",
+            "TEXT": "#794016",
+            "INPUT": "#FFFFFF",
+            "TEXT_INPUT": "#794016",
+            "SCROLL": "#c7e78b",
+            "BUTTON": ["#FFFFFF", "#7DCC0A"],
+            "PROGRESS": ["#7DCC0A", "#DCDCDC"],
+            "BORDER": 1,
+            "SLIDER_DEPTH": 0,
+            "PROGRESS_DEPTH": 0
+        }
+    }
+}

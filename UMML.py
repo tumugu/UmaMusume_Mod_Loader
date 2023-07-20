@@ -1,48 +1,61 @@
 import PySimpleGUI as sg
+
+from PIL import Image
 import sqlite3
 import json
-import os
 
-user_name = os.getlogin()
+from os.path import join,isdir,exists
+from os import getlogin,listdir
 
-def mod_get(_mod_path):
-    with open(os.path.join(_mod_path,"meta.json"),mode="r",encoding="utf-8")as f:
-        _meta_json = json.load(f)
-    _mod_meta = {
-        "pack_format":_meta_json["meta"]["pack_format"],
-        "mod_name":_meta_json["meta"]["mod_name"],
-        "description":_meta_json["meta"]["description"],
-        "version":_meta_json["meta"]["version"],
-        "assets":os.path.isdir(os.path.join(_mod_path,"assets")),
-        "sql":os.path.isdir(os.path.join(_mod_path,"sql"))
+from pprint import pprint
+
+
+pack_format = 1
+user_name = getlogin()
+
+def theme_set():
+    with open(join(".","config","config.json"),mode="r",encoding="utf-8")as f:
+        umamusume_theme = json.load(f)["config"]["theme"]
+
+    sg.theme_add_new('UmaMusume', umamusume_theme)
+    sg.theme("UmaMusume")
+
+    return None
+
+def meta_get(mod_path):
+    assets_exists = isdir(join(mod_path,"assets")) # assetsがあったらTrueを返す
+    sql_exists = exists(join(mod_path,"sql","load")) and exists(join(mod_path,"sql","unload")) # sql/load と sql/unload があるとTrueを返す
+
+    with open(join(mod_path, "meta.json"), mode="r", encoding="utf-8") as f:
+        meta_json = json.load(f)
+
+    meta = {
+        "pack_format" : meta_json["meta"]["pack_format"],
+        "name"        : meta_json["meta"]["name"],
+        "description" : meta_json["meta"]["description"],
+        "version"     : meta_json["meta"]["version"],
+        "assets"      : assets_exists,
+        "sql"         : sql_exists
     }
     
-    return _mod_meta
+    return meta
 
 
-umamusume_theme = {
-    'BACKGROUND': '#fafbfa',
-    'TEXT': '#794016',
-    'INPUT': '#FFFFFF',
-    'TEXT_INPUT': '#794016',
-    'SCROLL': '#c7e78b',
-    'BUTTON': ('#ffffff', '#7DCC0A'),
-    'PROGRESS': ('#7DCC0A', '#DCDCDC'),
-    'BORDER': 1,
-    'SLIDER_DEPTH': 0,
-    'PROGRESS_DEPTH': 0,
-}
+theme_set()
 
-mods_list = os.listdir("./mods")
+mods_layout = []
 
-for i in mods_list:
-    a = mod_get(os.path.join("./mods",i))
-    print(a)
+for i in listdir(join(".","mods")):
+    a = meta_get(join(".","mods",i))
+    mods_layout.extend(
+        [
+            [
+                sg.Frame("",[[sg.Image(filename=join(".","mods",i,"mod_pack.png"),subsample=int(Image.open(join(".","mods",i,"mod_pack.png")).size[0]/100),size=(100,100)),sg.Column([[sg.Text(a["name"]),sg.Push(),sg.Button("詳細",size=(5,1)),sg.Button("▶",size=(3,1))],[sg.Frame("",relief=sg.RELIEF_RIDGE,background_color="#FFFFFF",layout=[[sg.Text(a["description"],background_color="#FFFFFF",size=(36,4))]])]])]])
+            ],
+        ]
+    )
 
 
-
-sg.theme_add_new('UmaMusume', umamusume_theme)
-sg.theme("UmaMusume")
 
 top_layout = [
     [
@@ -57,27 +70,22 @@ top_layout = [
     ]
 ]
 
+
 center_layout = [
     [
         sg.Frame("",[[
-            sg.Column([
-                [
-                    sg.Frame("",[[sg.Image(filename=RF"C:\Users\{user_name}\Documents\python\temp\lb-tank02.png",size=(70,70)),sg.Column([[sg.Text("タイトル",font=("Arial Black",10)),sg.Push(),sg.Button("→",size=(3,1))],[sg.Multiline("",size=(45,2))]])]])
-                ]
-            ],scrollable=True,vertical_scroll_only=True,size=(450,350))
+            sg.Column(mods_layout,scrollable=True,vertical_scroll_only=True,size=(450,400))
         ]]),
 
         sg.Push(),
 
         sg.Frame("",[[
-            sg.Column([
-                [
-                    sg.Frame("mod名",[[sg.Image(filename=RF"C:\Users\{user_name}\Documents\python\temp\lb-tank02.png",expand_x=True,expand_y=True),sg.Column([[sg.Text("タイトル",font=("Arial Black",10)),sg.Push(),sg.Button("→")],[sg.Multiline("",size=(43,2))]])]])
-                ]
-            ],scrollable=True,vertical_scroll_only=True,size=(450,350))
+            sg.Column(
+                [[]],scrollable=True,vertical_scroll_only=True,size=(450,400))
         ]]),
     ]
 ]
+
 
 under_layout = [
     [
@@ -88,6 +96,7 @@ under_layout = [
         ])
     ]
 ]
+
 
 layout = [
     [
@@ -101,12 +110,20 @@ layout = [
     ]
 ]
 
-window = sg.Window("UmaMusume_Mod_Loader",layout,size=(1000,500))
 
-while True:
-    event,values = window.read()
 
-    if event == sg.WIN_CLOSED:
-        break
+def main():
+    window = sg.Window("UmaMusume_Mod_Loader",layout,size=(1000,500))
 
-window.close()
+    while True:
+        event,values = window.read()
+
+        if event == sg.WIN_CLOSED:
+            break
+
+    window.close()
+
+
+
+if __name__ == "__main__":
+    main()
