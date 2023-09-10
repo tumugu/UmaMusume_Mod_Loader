@@ -1,5 +1,5 @@
 # UmaMusume_Mod_Loader
-**UmaMusume_Mod_Loader**はウマ娘のModを簡単に読み込めるプログラムです。  
+**UmaMusume_Mod_Loader**はウマ娘のModを簡単に読み込めるプログラムです。<br>
 数回クリックするだけで、バックアップを取ってModを読み込んだり、バックアップから復元したりできます。
 
 Modを作っている方は、置き換えるAssetBundleファイルとsetting.ymlを用意すれば、このプログラムでも読み込ませられます。  

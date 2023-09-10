@@ -1,0 +1,14 @@
+{
+    "folder_name":{
+        "pack_format":1,
+        "name":"test_mod",
+        "description":"test_dsecrtiption",
+        "version":[0,0,1]
+    },
+    "folder_name2":{
+        "pack_format":1,
+        "name":"test_mod",
+        "description":"test_dsecrtiption",
+        "version":[0,0,1]
+    }
+}
